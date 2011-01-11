@@ -13,8 +13,8 @@ class Scheduler
 
     if @is_master
       @client = Gearman::Client.new('127.0.0.1:4730')
+   
       starting_scenario = Scenario.new @classes, @students
-
       @scenarios = determine_scenarios starting_scenario
  
       return @scenarios.sort! { |s1,s2| s1.rating <=> s2.rating }.reverse!
@@ -38,9 +38,6 @@ class Scheduler
 
     taskset = Gearman::TaskSet.new(@client) if @is_master
 
-    num_workers = 2
-    tasknum = 0
-
     scenarios = []
 
     scenario.pairings.each do |pairing|
@@ -53,15 +50,12 @@ class Scheduler
 
         if s.pairings.map {|p| p.finalized? }.include? false
           if (@is_master)
-            tasknum = tasknum.next
             task = Gearman::Task.new('determine_scenarios', Marshal.dump(s))
-            task.on_complete{ |d| scenarios.concat(Marshal.load(d))}
+            task.on_complete{ |d| print '.'; scenarios.concat(Marshal.load(d))}
             task.on_fail { puts "Worker failed."; exit }
             task.on_exception { |e| puts "exception:#{e}"; exit }
             task.on_retry { 2 }
-            taskset.add_task(task)
-            
-            taskset.wait(100000) if tasknum == num_workers
+            taskset.add_task(task)            
           else
             scenarios.concat(determine_scenarios(s))
           end

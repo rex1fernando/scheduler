@@ -1,93 +1,78 @@
+require 'rubygems'
 require 'csv'
+require 'gearman'
 Dir[File.join(File.dirname(__FILE__), 'scheduler/*.rb')].sort.each { |lib| require lib }
 
 class Scheduler
   attr_accessor :scenarios
 
-  def initialize(classes, students)
+  def initialize(classes, students, m = true)
     @classes = classes
     @students = students
-   
-    starting_scenario = Scenario.new @classes, @students
-    @scenarios = determine_scenarios starting_scenario
+    @is_master = m
+
+    if @is_master
+      @client = Gearman::Client.new('127.0.0.1:4730')
+      starting_scenario = Scenario.new @classes, @students
+
+      @scenarios = determine_scenarios starting_scenario
  
-    @scenarios.sort_by! { |scenario| scenario.rating }.reverse!
+      return @scenarios.sort! { |s1,s2| s1.rating <=> s2.rating }.reverse!
+    else
+      @worker = Gearman::Worker.new("127.0.0.1:4730")
+      @worker.add_ability('determine_scenarios') do |data, job|
+        print 'received job. Working...'
+        s = determine_scenarios(data)
+        puts 'Done.'
+        Marshal.dump(s)
+      end
+
+      loop { @worker.work }
+    end
   end
 
   private
 
   def determine_scenarios(scenario)
-    scenario = Marshal.load(Marshal.dump(scenario))
+    scenario = Marshal.load(scenario) if scenario.is_a? String
+
+    taskset = Gearman::TaskSet.new(@client) if @is_master
+
+    num_workers = 2
+    tasknum = 0
 
     scenarios = []
-    
+
     scenario.pairings.each do |pairing|
       if !pairing.finalized?
-        pairing.finalize!
-        s = Scenario.new scenario.classes, scenario.students, scenario.pairings
-        
+        new_pairings = scenario.pairings.clone
+        new_pairing = pairing.finalize
+        new_pairings[new_pairings.index(pairing)] = new_pairing
+
+        s = Scenario.new scenario.classes, scenario.students, new_pairings        
+
         if s.pairings.map {|p| p.finalized? }.include? false
-          scenarios.concat(determine_scenarios(s))
+          if (@is_master)
+            tasknum = tasknum.next
+            task = Gearman::Task.new('determine_scenarios', Marshal.dump(s))
+            task.on_complete{ |d| scenarios.concat(Marshal.load(d))}
+            task.on_fail { puts "Worker failed."; exit }
+            task.on_exception { |e| puts "exception:#{e}"; exit }
+            task.on_retry { 2 }
+            taskset.add_task(task)
+            
+            taskset.wait(100000) if tasknum == num_workers
+          else
+            scenarios.concat(determine_scenarios(s))
+          end
         else
           scenarios.push s
         end
       end
     end
 
-    possible_scenarios
+    taskset.wait(100000) if @is_master
+
+    scenarios
   end
 end
-
-def update_progress(i)
-  print "\r\e[0K#{i}"
-  $stdout.flush
-end
-
-def finish_progress
-  print "\r\e[0K"
-  $stdout.flush
-end
-
-puts "Reading classes...\n\n" # read classes
-
-classes = []
-progress = 1
-
-CSV.foreach "classes.csv" do |row|
-  classes.push(ChemClass.new(row[0], row[1], row[2..-1]))
-  update_progress progress
-  progress = progress.next
-end
-finish_progress
-
-#classes.each do |c|
-#  puts c
-#end
-
-puts "\nDone reading classes.\n\n"
-
-puts "Reading students...\n\n" # read students & schedules
-
-students = []
-progress = 1
-
-CSV.foreach "tas.csv" do |row|
-  students.push(Student.new(row[0], row[1].to_f, row[2..-1]))
-  update_progress progress
-  progress = progress.next
-end
-finish_progress
-
-#students.each do |s|
-#  puts s
-#end
-
-puts "\nDone reading students.\n\n"
-
-
-
-#s = Scheduler.new classes, students
-
-#max_rating = s.scenarios[0].rating
-
-#optimum_schedules = s.scenarios.find_all { |s| s.rating == max_rating }
