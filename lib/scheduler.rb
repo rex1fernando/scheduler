@@ -42,6 +42,7 @@ class Scheduler
 
     task_count = 0
 
+    puts 'pairings: ' + scenario.pairings.count
     scenario.pairings.each do |pairing|
       if !pairing.finalized?
         new_pairings = scenario.pairings.clone
