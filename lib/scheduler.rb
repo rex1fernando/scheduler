@@ -69,7 +69,7 @@ class Scheduler
       end
     end
 
-    taskset.wait(100000) if @is_master
+    taskset.wait if @is_master
 
     scenarios
   end
