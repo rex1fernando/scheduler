@@ -19,8 +19,7 @@ class Scenario
     rating = 0
 
     @classes.each do |c|
-      #rating = 
-      rating.next if paired_classes.include? c
+      rating = rating.next if paired_classes.include? c
     end
 
     rating
