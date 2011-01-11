@@ -52,14 +52,14 @@ class Scheduler
 
         if s.pairings.map {|p| p.finalized? }.include? false
           if (@is_master)
+            task_count = task_count.next
+            puts task_count
             task = Gearman::Task.new('determine_scenarios', Marshal.dump(s))
             task.on_complete{ |d| puts 'Worker returned.'; scenarios.concat(Marshal.load(d))}
             task.on_fail { puts "Worker failed."; exit }
             task.on_exception { |e| puts "exception:#{e}"; exit }
             task.on_retry { 2 }
             taskset.add_task(task) 
-            task_count = task_count.next
-            puts task_count
           else
             scenarios.concat(determine_scenarios(s))
           end
@@ -69,7 +69,7 @@ class Scheduler
       end
     end
 
-    taskset.wait if @is_master
+    taskset.wait(nil) if @is_master
 
     scenarios
   end
