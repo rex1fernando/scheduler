@@ -1,0 +1,93 @@
+require 'csv'
+Dir[File.join(File.dirname(__FILE__), 'scheduler/*.rb')].sort.each { |lib| require lib }
+
+class Scheduler
+  attr_accessor :scenarios
+
+  def initialize(classes, students)
+    @classes = classes
+    @students = students
+   
+    starting_scenario = Scenario.new @classes, @students
+    @scenarios = determine_scenarios starting_scenario
+ 
+    @scenarios.sort_by! { |scenario| scenario.rating }.reverse!
+  end
+
+  private
+
+  def determine_scenarios(scenario)
+    scenario = Marshal.load(Marshal.dump(scenario))
+
+    scenarios = []
+    
+    scenario.pairings.each do |pairing|
+      if !pairing.finalized?
+        pairing.finalize!
+        s = Scenario.new scenario.classes, scenario.students, scenario.pairings
+        
+        if s.pairings.map {|p| p.finalized? }.include? false
+          scenarios.concat(determine_scenarios(s))
+        else
+          scenarios.push s
+        end
+      end
+    end
+
+    possible_scenarios
+  end
+end
+
+def update_progress(i)
+  print "\r\e[0K#{i}"
+  $stdout.flush
+end
+
+def finish_progress
+  print "\r\e[0K"
+  $stdout.flush
+end
+
+puts "Reading classes...\n\n" # read classes
+
+classes = []
+progress = 1
+
+CSV.foreach "classes.csv" do |row|
+  classes.push(ChemClass.new(row[0], row[1], row[2..-1]))
+  update_progress progress
+  progress = progress.next
+end
+finish_progress
+
+#classes.each do |c|
+#  puts c
+#end
+
+puts "\nDone reading classes.\n\n"
+
+puts "Reading students...\n\n" # read students & schedules
+
+students = []
+progress = 1
+
+CSV.foreach "tas.csv" do |row|
+  students.push(Student.new(row[0], row[1].to_f, row[2..-1]))
+  update_progress progress
+  progress = progress.next
+end
+finish_progress
+
+#students.each do |s|
+#  puts s
+#end
+
+puts "\nDone reading students.\n\n"
+
+
+
+#s = Scheduler.new classes, students
+
+#max_rating = s.scenarios[0].rating
+
+#optimum_schedules = s.scenarios.find_all { |s| s.rating == max_rating }
