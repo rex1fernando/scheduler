@@ -21,7 +21,7 @@ class Scheduler
     else
       @worker = Gearman::Worker.new("127.0.0.1:4730")
       @worker.add_ability('determine_scenarios') do |data, job|
-        print 'received job. Working...'
+        puts 'received job. Working...'
         s = determine_scenarios(data)
         puts 'Done.'
         Marshal.dump(s)
@@ -51,7 +51,7 @@ class Scheduler
         if s.pairings.map {|p| p.finalized? }.include? false
           if (@is_master)
             task = Gearman::Task.new('determine_scenarios', Marshal.dump(s))
-            task.on_complete{ |d| print '.'; scenarios.concat(Marshal.load(d))}
+            task.on_complete{ |d| puts 'Worker returned.'; scenarios.concat(Marshal.load(d))}
             task.on_fail { puts "Worker failed."; exit }
             task.on_exception { |e| puts "exception:#{e}"; exit }
             task.on_retry { 2 }
