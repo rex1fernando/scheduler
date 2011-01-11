@@ -40,6 +40,8 @@ class Scheduler
 
     scenarios = []
 
+    task_count = 0
+
     scenario.pairings.each do |pairing|
       if !pairing.finalized?
         new_pairings = scenario.pairings.clone
@@ -55,7 +57,9 @@ class Scheduler
             task.on_fail { puts "Worker failed."; exit }
             task.on_exception { |e| puts "exception:#{e}"; exit }
             task.on_retry { 2 }
-            taskset.add_task(task)            
+            taskset.add_task(task) 
+            task_count = task_count.next
+            puts task_count
           else
             scenarios.concat(determine_scenarios(s))
           end
