@@ -1,0 +1,4 @@
+intersecting (WeeklyTimeInterval (WeeklyTime Sunday 1 00) (WeeklyTime Sunday 2 00)) (WeeklyTimeInterval (WeeklyTime Sunday 2 01) (WeeklyTime Sunday 3 00))
+putStrLn "Should be false."
+intersecting (WeeklyTimeInterval (WeeklyTime Sunday 1 00) (WeeklyTime Sunday 2 02)) (WeeklyTimeInterval (WeeklyTime Sunday 2 01) (WeeklyTime Sunday 3 00))
+putStrLn "Should be true."
