@@ -1,0 +1,33 @@
+class TimeInterval
+  attr_accessor :start_time, :end_time, :class
+  
+  def initialize(st, et = nil, c = nil)
+    if st.is_a? String
+      init_from_string st
+    else
+      @start_time = st
+      @end_time = et
+      @class = c
+    end
+  end
+
+  
+  def intersects_with?(ti)
+    @end_time >= ti.start_time && @start_time <= ti.end_time
+  end
+
+  def to_s
+    "#{@start_time.to_s} - #{@end_time.to_s}"
+  end
+
+  private
+  
+  def init_from_string(s)
+    without_spaces = s.gsub " ", ""
+    weekday_letter = without_spaces[0,1]
+    time_strings = without_spaces[1..-1].split "-"
+    
+    @start_time = WeekTime.new weekday_letter, time_strings[0]
+    @end_time = WeekTime.new weekday_letter, time_strings[1]
+  end
+end
