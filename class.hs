@@ -3,12 +3,8 @@ module Class where
 import WeeklyTimes
 import qualified TA
 
-data Classification = Recitation | Lab
+data Classification = Recitation | Lab deriving (Show, Eq)
 
-instance Read Classification where
-  read "R" ++ s = (Recitation,s)
-  read "L" ++ s = (Lab,s
-
-data Class = Class { name :: String, classification :: Classification, meetingTimes :: [WeeklyTimeInterval] }
+data Class = Class { name :: String, classification :: Classification, meetingTimes :: [WeeklyTimeInterval] } deriving Show
 
 type PossiblePairings = [(Class,TA.TA)]
