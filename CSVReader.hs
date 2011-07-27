@@ -16,10 +16,11 @@ readClassesFromFile fp = (do rs <- parseCSVFromFile fp
   where
     recordToClass :: Record -> Either ParseError Class.Class
     recordToClass r = do
-      cl <- (parse classClassification "" (head (tail r)))
-      mt <- eitherFromList $ map (parse timeInterval "") (tail (tail r))
+      cl <- (parse classClassification "" (head (tail (tail r))))
+      mt <- eitherFromList $ map (parse timeInterval "") (tail (tail (tail r)))
       --cl <- return Class.Lab
       return Class.Class { Class.name = (head r), 
+                           Class.section = (head (tail r)),
                            Class.classification = cl,
                            Class.meetingTimes = mt
                            --Class.meetingTimes = (WeeklyTimeInterval (WeeklyTime Monday 0 0) (WeeklyTime Monday 0 0)):[]
