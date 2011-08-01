@@ -47,3 +47,12 @@ renderScene da = do
                              showText "HelloWorld"
                              restore
   return True
+  
+graph :: [(TA,Class)] -> [(TA, Class)] -> [Render a]
+graph possiblePairings pairings = (map circleForTA tas) ++ (map circleForClass classes)
+  where
+    tas = sort $ nub $ map fst pairings
+    classes = sort $ nub $ map snd pairings
+    circle elem lst xOffset = do save
+                                 translate xOffset 
+    
