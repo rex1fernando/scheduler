@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -XFlexibleInstances -XUndecidableInstances -XIncoherentInstances #-}
+
 module WeeklyTimes where
 
 data WeekDay = Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday deriving (Show, Eq, Enum, Bounded, Ord)

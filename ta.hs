@@ -1,4 +1,7 @@
+{-# OPTIONS_GHC -XFlexibleInstances -XUndecidableInstances -XIncoherentInstances #-}
+
 module TA where
+
 import WeeklyTimes
 import Data.Char
 

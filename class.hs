@@ -1,11 +1,20 @@
+{-# OPTIONS_GHC -XFlexibleInstances -XUndecidableInstances -XIncoherentInstances #-}
+
 module Class where
 
+import Data.Char
 import WeeklyTimes
 import qualified TA
 
 data Classification = Recitation | Lab deriving (Show, Eq)
 
 data Class = Class { name :: String, section :: String, classification :: Classification, meetingTimes :: [WeeklyTimeInterval] } deriving Show
+
+instance Eq Class where
+  (==) a b = (name a) == (name b)
+
+instance Ord Class where
+  (<=) a b = (map toLower (name a)) <= (map toLower (name b))
 
 type PossiblePairing = (Class,TA.TA)
 
