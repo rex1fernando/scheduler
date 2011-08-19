@@ -5,7 +5,7 @@ module TA where
 import WeeklyTimes
 import Data.Char
 
-data Classification = HalfTime | QuarterTime deriving (Show)
+data Classification = HalfTime | QuarterTime deriving (Show, Eq)
 
 data TA = TA {name :: String, classification :: Classification, busyTimes :: BusyTimes} deriving (Show)
 
